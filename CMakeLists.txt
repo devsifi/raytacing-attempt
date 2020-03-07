@@ -3,5 +3,12 @@ project(ray)
 
 add_subdirectory(third_party/stb)
 
-add_executable(ray src/main.cpp)
+add_executable(ray 
+    src/vec3.h
+    src/ray.h
+    
+    src/vec3.cpp
+    src/ray.cpp
+    src/main.cpp
+)
 target_link_libraries(ray stb)
