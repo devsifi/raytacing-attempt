@@ -86,6 +86,80 @@ vec3 operator/(const vec3 &a, const vec3 &b)
     };
 }
 
+vec3& operator+=(vec3 &a, const vec3 &b)
+{
+    
+    a.x += b.x;
+    a.y += b.y; 
+    a.z += b.z;
+
+    return a;
+}
+
+vec3& operator-=(vec3 &a, const vec3 &b)
+{
+    a.x -= b.x;
+    a.y -= b.y; 
+    a.z -= b.z;
+
+    return a;
+}
+
+vec3& operator*=(vec3 &a, const vec3 &b)
+{
+    a.x *= b.x;
+    a.y *= b.y; 
+    a.z *= b.z;
+
+    return a;
+}
+
+vec3& operator/=(vec3 &a, const vec3 &b)
+{
+    a.x /= b.x;
+    a.y /= b.y; 
+    a.z /= b.z;
+
+    return a;
+}
+
+vec3& operator+=(vec3 &a, float f)
+{
+    
+    a.x += f;
+    a.y += f;
+    a.z += f;
+
+    return a;
+}
+
+vec3& operator-=(vec3 &a, float f)
+{
+    a.x -= f;
+    a.y -= f;
+    a.z -= f;
+
+    return a;
+}
+
+vec3& operator*=(vec3 &a, float f)
+{
+    a.x *= f;
+    a.y *= f;
+    a.z *= f;
+
+    return a;
+}
+
+vec3& operator/=(vec3 &a, float f)
+{
+    a.x /= f;
+    a.y /= f;
+    a.z /= f;
+
+    return a;
+}
+
 vec3 operator+(const vec3 &vec, const float f)
 {
     return {
@@ -157,5 +231,6 @@ vec3 operator/(const float f, const vec3 &vec)
         vec.z / f
     };
 }
+
 
 #pragma endregion

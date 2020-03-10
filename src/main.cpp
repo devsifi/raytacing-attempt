@@ -5,12 +5,18 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <limits>
 
+#include "random.h"
 #include "ray.h"
-#include "vec3.h"
+#include "camera.h"
+#include "hittable_list.h"
+#include "shapes/sphere.h"
 
 float ray_hit_sphere(const vec3 &center, float radius, const ray &ray);
-vec3 ray_color(const ray &r);
+vec3 ray_color(const ray &ray, hittable *world);
+
+vec3 random_in_unit_sphere();
 
 int to_int(float f);
 
@@ -18,24 +24,34 @@ int main(int argc, char *argv[])
 {
     const int WIDTH = 200;
     const int HEIGHT = 100;
+    const int SAMPLE_COUNT = 100;
     const int CHANNEL_NUMBER = 3;
 
     std::vector<std::uint8_t> pixels(WIDTH * HEIGHT * CHANNEL_NUMBER);
 
-    vec3 lower_left_corner{-2.0f, -1.0f, -1.0f};
-    vec3 horizontal{4.0f, 0.0f, 0.0f};
-    vec3 vertical{0.0f, 2.0f, 0.0f};
-    vec3 origin{0.0f, 0.0f, 0.0f};
+    hittable *list[2];
+    list[0] = new sphere(vec3{0.0f,0.0f,-1.0f}, 0.5f);
+    list[1] = new sphere(vec3{0.0f,-100.5f,-1.0f}, 100.0f);
+    hittable *world = new hittable_list(list,2);
+    camera cam;
 
     int index;
     for (int j = HEIGHT - 1; j >= 0; j--)
     {
         for (int i = 0; i < WIDTH; i++)
         {
-            float u = float(i) / float(WIDTH);
-            float v = float(j) / float(HEIGHT);
-            ray ray{origin, lower_left_corner + u * horizontal + v * vertical};
-            vec3 color = ray_color(ray);
+            vec3 color;
+            for (int s = 0; s < SAMPLE_COUNT; s++) 
+            {
+                float u = float(i + random_double()) / float(WIDTH);
+                float v = float(j + random_double()) / float(HEIGHT);
+                ray r = cam.get_ray(u, v);
+
+                color += ray_color(r, world);
+            }
+
+            color /= float(SAMPLE_COUNT);
+            color = vec3{ std::sqrt(color.x), std::sqrt(color.y), std::sqrt(color.z) };
 
             pixels[index++] = to_int(color.x);
             pixels[index++] = to_int(color.y);
@@ -65,22 +81,34 @@ float ray_hit_sphere(const vec3 &center, float radius, const ray &ray)
     }
 }
 
-vec3 ray_color(const ray &ray)
+vec3 ray_color(const ray &r, hittable *world)
 {
-    float t = ray_hit_sphere({0.0f, 0.0f, -1.0f}, 0.5f, ray);
-    if (t > 0.0f)
+    hit_record rec;
+    if (world->hit(r, 0.0, std::numeric_limits<float>::max(), rec)) 
     {
-        vec3 N = normalise(ray.point_at_param(t) - vec3{0.0f, 0.0f, -1.0f});
-        return 0.5f * (N + 1);
+        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
+        return 0.5 * ray_color(ray{rec.p, target - rec.p}, world);
+    } else 
+    {
+        vec3 unit_direction = normalise(r.direction);
+        float t = 0.5f * (unit_direction.y + 1.0f);
+        
+        return (1.0f - t) * vec3{1.0f, 1.0f, 1.0f} + t * vec3{0.5f, 0.7f, 1.0f}; // lerp
     }
 
-    vec3 unit_direction = normalise(ray.direction);
-    t = 0.5f * (unit_direction.y + 1.0f);
-
-    return (1.0f - t) * vec3{1.0f, 1.0f, 1.0f} + t * vec3{0.5f, 0.7f, 1.0f}; // lerp
 }
 
 int to_int(float f)
 {
     return int(255.99 * f);
+}
+
+vec3 random_in_unit_sphere()
+{
+    vec3 p;
+    do 
+    {
+        p = 2.0f  * vec3 {float(random_double()), float(random_double()),float(random_double())} - vec3{1.0f, 1.0f, 1.0f};
+    } while (p.length_squared() >= 1.0f);
+    return p;
 }
