@@ -5,9 +5,19 @@
 
 struct vec3
 {
-    float x = 0.0f;
-    float y = 0.0f;
-    float z = 0.0f;
+    union 
+    {
+        struct
+        {
+            float x;
+            float y;
+            float z;
+        };
+        struct
+        {
+            float array[3];
+        };
+    };
 
     float length() const;
     float length_squared() const;

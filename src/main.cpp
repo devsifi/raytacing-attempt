@@ -1,114 +1,54 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+#include <string>
 #include <vector>
-#include <cmath>
 #include <cstdint>
-#include <iostream>
-#include <limits>
 
-#include "random.h"
-#include "ray.h"
-#include "camera.h"
-#include "hittable_list.h"
-#include "shapes/sphere.h"
+#include "vec3.h"
 
-float ray_hit_sphere(const vec3 &center, float radius, const ray &ray);
-vec3 ray_color(const ray &ray, hittable *world);
-
-vec3 random_in_unit_sphere();
-
+void write_to_file(std::string path, std::vector<vec3>& framebuffer, int width, int height, int channels);
 int to_int(float f);
 
 int main(int argc, char *argv[])
 {
-    const int WIDTH = 200;
-    const int HEIGHT = 100;
-    const int SAMPLE_COUNT = 100;
-    const int CHANNEL_NUMBER = 3;
+    const int WIDTH = 1024;
+    const int HEIGHT = 768;
+    const int CHANNELS = 3;
 
-    std::vector<std::uint8_t> pixels(WIDTH * HEIGHT * CHANNEL_NUMBER);
+    std::vector<vec3> framebuffer(WIDTH * HEIGHT);
 
-    hittable *list[2];
-    list[0] = new sphere(vec3{0.0f,0.0f,-1.0f}, 0.5f);
-    list[1] = new sphere(vec3{0.0f,-100.5f,-1.0f}, 100.0f);
-    hittable *world = new hittable_list(list,2);
-    camera cam;
-
-    int index;
-    for (int j = HEIGHT - 1; j >= 0; j--)
+    for (std::size_t j = 0; j < HEIGHT; j++)
     {
-        for (int i = 0; i < WIDTH; i++)
+        for (std::size_t i = 0; i < WIDTH; i++)
         {
-            vec3 color;
-            for (int s = 0; s < SAMPLE_COUNT; s++) 
-            {
-                float u = float(i + random_double()) / float(WIDTH);
-                float v = float(j + random_double()) / float(HEIGHT);
-                ray r = cam.get_ray(u, v);
-
-                color += ray_color(r, world);
-            }
-
-            color /= float(SAMPLE_COUNT);
-            color = vec3{ std::sqrt(color.x), std::sqrt(color.y), std::sqrt(color.z) };
-
-            pixels[index++] = to_int(color.x);
-            pixels[index++] = to_int(color.y);
-            pixels[index++] = to_int(color.z);
+            float u = float(i / float(WIDTH));
+            float v = float(j / float(HEIGHT));
+            framebuffer[i + j * WIDTH] = { u, v, 0 };
         }
     }
 
-    stbi_write_jpg("out/ray.jpg", WIDTH, HEIGHT, CHANNEL_NUMBER, pixels.data(), 100);
+    // Save Fraembuffer to file
+    write_to_file("out/ray.jpg", framebuffer, WIDTH, HEIGHT, CHANNELS);
+
     return 0;
 }
 
-float ray_hit_sphere(const vec3 &center, float radius, const ray &ray)
+void write_to_file(std::string path, std::vector<vec3>& framebuffer, int width, int height, int channels)
 {
-    vec3 oc = ray.origin - center;
-    float a = dot(ray.direction, ray.direction);
-    float b = 2.0f * dot(oc, ray.direction);
-    float c = dot(oc, oc) - radius * radius;
-    float discriminant = b * b - 4.0f * a * c;
+    std::vector<std::uint8_t> pixels(width * height * channels);
 
-    if (discriminant < 0.0f)
+    for (std::size_t i = 0; i < framebuffer.size(); i++)
     {
-        return -1.0f;
-    }
-    else
-    {
-        return (-b - std::sqrt(discriminant)) / (2.0f * a);
-    }
-}
+        pixels[i * 3] =     to_int(framebuffer[i].x);
+        pixels[i * 3 + 1] = to_int(framebuffer[i].y);
+        pixels[i * 3 + 2] = to_int(framebuffer[i].z);
+    }    
 
-vec3 ray_color(const ray &r, hittable *world)
-{
-    hit_record rec;
-    if (world->hit(r, 0.0, std::numeric_limits<float>::max(), rec)) 
-    {
-        vec3 target = rec.p + rec.normal + random_in_unit_sphere();
-        return 0.5 * ray_color(ray{rec.p, target - rec.p}, world);
-    } else 
-    {
-        vec3 unit_direction = normalise(r.direction);
-        float t = 0.5f * (unit_direction.y + 1.0f);
-        
-        return (1.0f - t) * vec3{1.0f, 1.0f, 1.0f} + t * vec3{0.5f, 0.7f, 1.0f}; // lerp
-    }
-
+    stbi_write_jpg(path.c_str(), width, height, channels, pixels.data(), 100);
 }
 
 int to_int(float f)
 {
     return int(255.99 * f);
-}
-
-vec3 random_in_unit_sphere()
-{
-    vec3 p;
-    do 
-    {
-        p = 2.0f  * vec3 {float(random_double()), float(random_double()),float(random_double())} - vec3{1.0f, 1.0f, 1.0f};
-    } while (p.length_squared() >= 1.0f);
-    return p;
 }
