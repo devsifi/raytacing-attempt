@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     }
 
     // Save Fraembuffer to file
-    write_to_file("out/ray.jpg", framebuffer, WIDTH, HEIGHT, CHANNELS);
+    write_to_file("img/ray.jpg", framebuffer, WIDTH, HEIGHT, CHANNELS);
 
     return 0;
 }
