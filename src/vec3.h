@@ -24,6 +24,8 @@ struct vec3
 };
 
 float dot(const vec3 &, const vec3 &);
+float length(const vec3 &);
+float length_squared(const vec3 &);
 
 vec3 normalise(const vec3 &);
 vec3 cross(const vec3 &, const vec3 &);

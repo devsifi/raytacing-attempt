@@ -5,6 +5,10 @@ add_subdirectory(third_party/stb)
 
 add_executable(ray 
     src/vec3.cpp
+    src/ray.cpp
+
+    src/sphere.cpp
+
     src/main.cpp
 )
 target_link_libraries(ray stb)

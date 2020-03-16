@@ -3,9 +3,19 @@
 
 #include <string>
 #include <vector>
+#include <limits>
 #include <cstdint>
 
 #include "vec3.h"
+#include "sphere.h"
+
+struct camera
+{
+    vec3 position;
+    float fov;
+};
+
+vec3 cast_ray(ray r, sphere s);
 
 void write_to_file(std::string path, std::vector<vec3>& framebuffer, int width, int height, int channels);
 int to_int(float f);
@@ -14,17 +24,30 @@ int main(int argc, char *argv[])
 {
     const int WIDTH = 1024;
     const int HEIGHT = 768;
+    const float ASPECT_RATIO = float(WIDTH) / float(HEIGHT);
     const int CHANNELS = 3;
 
     std::vector<vec3> framebuffer(WIDTH * HEIGHT);
+    camera cam;
+    cam.position = { 0.f, 0.f, 0.f };
+    cam.fov = 90.f;
 
     for (std::size_t j = 0; j < HEIGHT; j++)
     {
         for (std::size_t i = 0; i < WIDTH; i++)
         {
-            float u = float(i / float(WIDTH));
-            float v = float(j / float(HEIGHT));
-            framebuffer[i + j * WIDTH] = { u, v, 0 };
+            float x =  (2.f * (i + .5f) / float(WIDTH) - 1) * std::tan(cam.fov / 2.f) * ASPECT_RATIO;
+            float y = -(2.f * (j + .5f) / float(HEIGHT) - 1) * std::tan(cam.fov / 2.f);
+
+            ray r;
+            r.origin = { 0.f, 0.f, 0.f };
+            r.direction =  normalise({x, y, -1.f});
+
+            sphere s;
+            s.center = { 0.f, 0.f, 5.f };
+            s.radius =  3.f;
+
+            framebuffer[i + j * WIDTH] = cast_ray(r, s);
         }
     }
 
@@ -32,6 +55,20 @@ int main(int argc, char *argv[])
     write_to_file("out/ray.jpg", framebuffer, WIDTH, HEIGHT, CHANNELS);
 
     return 0;
+}
+
+vec3 cast_ray(ray r, sphere s)
+{
+    float sphere_dist = std::numeric_limits<float>::max();
+    if(ray_hit(s, r))
+    {
+        return { .3f, .7f,0.8f };
+    }
+
+    vec3 unit_direction = normalise(r.direction);
+    float t = .5f * (unit_direction.y + 1.f);
+
+    return (1.0f - t) * vec3{ 1.f, 1.f, 1.f } + t * vec3{ .5f, .7f, 1.f};
 }
 
 void write_to_file(std::string path, std::vector<vec3>& framebuffer, int width, int height, int channels)

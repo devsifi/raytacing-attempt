@@ -32,6 +32,15 @@ float dot(const vec3 &a, const vec3 &b)
             a.z * b.z;
 }
 
+float length(const vec3 &vec)
+{
+    return vec.length();
+}
+float length_squared(const vec3 &vec)
+{
+    return vec.length_squared();
+}
+
 vec3 normalise(const vec3 &vec)
 {
     return vec / vec.length();
